@@ -33,5 +33,5 @@ remotes::install_github("Smithsonian/SARGEtools")
 
 ## Next Steps 
 
-See the [template_markdown](link) for detailed information about using these functions. 
+See the [template_markdown](https://github.com/Smithsonian/SARGEtools/blob/main/template_markdown/SARGEtools_markdown.pdf) for detailed information about using these functions. 
 
