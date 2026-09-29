@@ -1,0 +1,12 @@
+Package: SARGEtools
+Title: Tools for working with SARGE data
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Stephanie", "Wilson", , "WilsonSJ@si.edu", role = c("aut", "cre")),
+    person("Abigail", "Lewis", , "abigail.sl.lewis@gmail.com", role = c("aut"))
+    )
+Description: Data tools developed for use with SARGE (Semi-Autonomous Radon and Greenhouse Gas Equilibrator) system data
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
