@@ -1,3 +1,10 @@
+#' Check timestamps
+#'
+#' @param data dataset to check
+#' @param TIMEZONE timezone to use
+#' @param current_time current time
+#'
+#' @returns formatted text output for shiny overview page
 check_timestamps <- function(data, TIMEZONE, current_time) {
   
   latest_data <- max(data$TIMESTAMP, na.rm = TRUE)
