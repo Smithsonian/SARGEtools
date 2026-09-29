@@ -1,0 +1,281 @@
+---
+title: "SARGEtools Example Markdown"
+author: "Stephanie J. Wilson"
+date: "Last Updated: 09-29-2026"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+
+This code is an example or template for creating a pdf summary of SARGE data. With this code you can plot data using the sarge_plot_defaults() function which will plot any data set as a default parameter 
+
+
+# **Step 1: Set Up R to run this Code** 
+
+## Download the SARGEtools package if you do not already have it
+```{r download SARGEtools, message=FALSE, warning=FALSE}
+
+#Use remotes to install the SARGEtools package from Github 
+
+#if you don't have the remotes package use: 
+    #install.packages("remotes")
+library(remotes)
+
+# Install from GitHub
+remotes::install_github("Smithsonian/SARGEtools") 
+
+
+```
+
+## Read in packages that will be needed to run this code 
+```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Load required packages to run this markdown
+
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(DT)
+library(SARGEtools)
+
+
+```
+
+## Set the time zone and date range of interest
+```{r date time, message=FALSE, warning=FALSE}
+
+
+# Set TIMEZONE that is relevant to your data 
+TIMEZONE = "EST"
+
+
+# Define the date window you want shown on the plots 
+start_date = "2024-09-20"
+end_date = "2024-09-27"
+
+
+```
+
+
+# **Step 2: Set your SARGE data configuration** 
+
+## Define the data file descriptions 
+### File name in example: file_descriptions.txt or file_descriptions.csv
+### *User builds this file!* 
+
+Need to set up a file that has links to your data files output by SARGE (these can be online in a Dropbox, Google Drive, Sharepoint, GitHub, etc). If you are not using an online repository, you can upload your files to a folder and put the path in the file_tab_descriptions.txt, but if you have an online repository you can put the link to the data. Note: If you are using google sheets, make the sheet so anyone with the link can view the file, then use the googlesheets package and add this line to your code: `googlesheets4::gs4_deauth()`
+
+The file_descriptions will include user defined columns: 
+
+ - **`data_type`**        = data type descriptor (e.g. Physiochemical, Hydrologic, GHG, Radon) need one for each data link, so typically one per instrument.
+ 
+ - **`data_link`**        = location of the data (e.g. web link or file path).
+ 
+ - **`skip`**             = how many lines will need to be skipped before reaching data in the file.
+ 
+ - **`colname_override`** = these are the column names that we are defining for the linked file. 
+
+
+*It is important to verify that each of these columns and rows match the data coming from the instrument of interest.*
+
+
+
+## Data the column name descriptions file. This describes your variables, renames instrument or campbell code defined columns. 
+### File name in example: colname_descriptions.csv
+### *User builds this file!* 
+
+The variable_descriptions file will include user defined columns: 
+
+ - **`data_type`**        = data type descriptor (e.g. Physiochemical, Hydrologic, GHG, Radon) need one for each data link, should match file_descriptions data_types.
+ 
+ - **`label`**            = label that will be used when plotting the data.
+ 
+ - **`colname`**          = column name that will match one of the listed values in colname_override for the specified data_type.
+ 
+ - **`color`**            = this is the R color that the variable will be plotted in.
+ 
+ - **`default`**          = determines if this is a default plotting variable (T) or not (F); sarge_plot_defaults will only plot those listed as "T".
+ 
+```{r configure data, warning=FALSE}
+
+## Define your file_descriptions file and read it:  
+
+# If you are using a text file: 
+files_txt <- read_delim(
+  #enter your path and file name: 
+  "../template_markdown/configure_data/file_descriptions.txt",  
+  
+  show_col_types = FALSE, delim = "\t")
+
+# If you are using a csv file: 
+files_csv <- read_csv(
+  #enter your path and file name: 
+  "../template_markdown/configure_data/file_descriptions.csv",  
+  
+  show_col_types = FALSE)
+
+
+
+
+# Define your colname_descriptions file and read it: 
+variables <- read_csv(
+  #enter your path and file name:
+  "../template_markdown/configure_data/variable_descriptions.csv",   
+  
+  show_col_types = FALSE) %>%
+  
+  mutate(
+    default = as.logical(default) ) %>%
+  
+  mutate(colname = if_else(is.na(colname), label, colname),
+         
+         label = if_else(is.na(label), colname, label))
+
+
+
+```
+
+
+# **Step 3: Read in your SARGE Data**
+
+Use the sarge_read() function here to read in data listed in file_descriptions 
+
+```{r read in data, warning=FALSE}
+
+# Read in the data with sarge_read() function
+data <- sarge_read(
+  files = files_csv,       # dataframe containing your file_descriptions from Step 2
+  variables = variables,   # dataframe containing your variable_descriptions from Step 2
+  timezone = TIMEZONE,     # TIMEZONE value defined in Step 1
+  resolution = "minute"    # time resolution you would like (e.g. "minute", "hour")
+)
+
+# Take a first look at the data 
+
+head(data)     
+
+```
+
+
+# **Step 4: Plot the SARGE Data**
+
+## Physiochemical Data: Measurements made by the Xylem EXO2 Sonde in the example data 
+
+```{r plot physiochemical data, warning=FALSE}
+
+# Set the desired data_type from your data (must match a data_type in variables)
+data_type = "Physiochemistry"
+
+# Plot the greenhouse gas data from SARGE 
+exo_plot <- sarge_plot_defaults(
+                    data = data,              #file_descriptions dataframe 
+                    data_type = data_type,    #data_type you want to plot
+                    start = start_date,       #the defined start date value
+                    end = end_date,           #the defined end date value
+                    variables = variables)    #variables dataframe with colnames, colors
+
+# Print the Plot 
+exo_plot 
+
+
+
+# Plot the data for a shorter window of time and defined it in the function 
+exo_plot1 <- sarge_plot_defaults(
+                  data = data,                         #file_descriptions dataframe 
+                  data_type = "Physiochemistry",       #data_type you want to plot
+                  start = "2024-09-20 12:00:00",       #newly defined start date
+                  end = "2024-09-20 14:00:00",         #newly defined end date 
+                  variables = variables)               #variables dataframe with colnames, colors
+
+# Print the Plot 
+exo_plot1 
+
+```    
+
+## Hydrologic Data: Measurements made by the Sontek IQ ADCP in the example data 
+
+```{r plot ADCP data, warning=FALSE}
+
+# Set the desired data_type from your data (must match a data_type in variables)
+data_type = "Hydrology"
+
+# Plot the greenhouse gas data from SARGE 
+adcp_plot <- sarge_plot_defaults(
+                    data = data,              #file_descriptions dataframe 
+                    data_type = data_type,    #data_type you want to plot
+                    start = start_date,       #the defined start date value
+                    end = end_date,           #the defined end date value
+                    variables = variables)    #variables dataframe with colnames, colors
+
+# Print the Plot 
+adcp_plot 
+
+
+```    
+
+## Greenhouse Gas Data: Measurements made by a LICOR 7810 in the example data 
+
+```{r plot GHG data, warning=FALSE}
+
+# Set the desired data_type from your data (must match a data_type in variables)
+data_type = "GHG"
+
+# Plot the greenhouse gas data from SARGE 
+ghg_plot <- sarge_plot_defaults(
+                    data = data,              #file_descriptions dataframe 
+                    data_type = data_type,    #data_type you want to plot
+                    start = start_date,       #the defined start date value
+                    end = end_date,           #the defined end date value
+                    variables = variables)    #variables dataframe with colnames, colors
+
+# Print the Plot 
+ghg_plot 
+
+
+
+# Plot the greenhouse gas data for a shorter window of time and defined it in the function 
+ghg_plot1 <- sarge_plot_defaults(
+                    data = data,                         #file_descriptions dataframe 
+                    data_type = "GHG",                   #data_type you want to plot
+                    start = "2024-09-20 12:00:00",       #newly defined start date
+                    end = "2024-09-20 14:00:00",         #newly defined end date 
+                    variables = variables)              #variables dataframe with colnames, colors
+
+# Print the Plot 
+ghg_plot1 
+
+```    
+
+## Radon Gas Data: Measurements made by a Durridge RAD7 in the example data 
+
+```{r plot Radon data, warning=FALSE}
+
+
+# Set the desired data_type from your data (must match a data_type in variables)
+data_type = "Radon"
+
+# Plot the greenhouse gas data from SARGE 
+rad7_plot <- sarge_plot_defaults(
+                    data = data,              #file_descriptions dataframe 
+                    data_type = data_type,    #data_type you want to plot
+                    start = start_date,       #the defined start date value 
+                    end = end_date,           #the defined end date value
+                    variables = variables)    #variables dataframe with colnames, colors
+
+# Print the Plot 
+rad7_plot 
+
+
+
+
+```    
+
+
+
+
+
+
+
+
